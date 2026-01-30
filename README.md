@@ -62,6 +62,9 @@ If you see a shuffle spill in the median quartile of the spark job, the partitio
 - spark.sql.adaptive.advisoryPartitionSizeInBytes (default: 64mb)
     - Increase to 128mb if you're already using optimized writes
 
+## Run-Length Encoding
+What we need to know is we can sort partition data with the `sortWithinPartition` spark command. If we designate the lowest cardinality columns to be sorted (and the largest sized columns, such as strings vs smaller sized columns like boolean), Run-Length Encoding kicks in and the data can be compressed *even smaller* be grouping the values together in columnar format. This benefits downstream jobs because they have to read less data. **Note: any shuffle that happens after the sort command completely unsorts the data**
+
 ## References
 ### Videos
 - [How to Automate Performance Tuning for Apache Spark by Jean Yves Stephan](https://www.youtube.com/watch?v=ph_2xwVjCGs)
