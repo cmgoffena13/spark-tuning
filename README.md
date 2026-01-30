@@ -31,7 +31,7 @@ A shuffle occurs during wide transformations, `group by`, `order by`, etc. When 
 Because the default for total shuffle partitions is 200, with no automatic scaling, it is highly likely that this config will need adjusted. Especially if the total number of cpu cores in the cluster is greater than 200 (because this would mean the cluster is not utilizing the maximum parallelism).
 
 ### Write Phase
-The end of a spark job normally ends up writing data. The partition size and number of partitions for this phase are determined by the previous phase (Shuffle or Read). There is an interesting dilemma here because the ideal write size of partitions is 128-200mb, but the shuffle phase can change the partition size and number of partitions. There is the `spark.databricks.delta.optimizeWrite.enabled` = true config that will trigger *another* shuffle to align the written partition sizes for optimal reads downstream.
+The end of a spark job normally ends up writing data. The partition size and number of partitions for this phase are determined by the previous phase (Shuffle or Read). There is an interesting dilemma here because the ideal write size of partitions is 128-200mb, but the shuffle phase can change the partition size and number of partitions. There is the `spark.databricks.delta.optimizeWrite.enabled` = true config that will trigger **another** shuffle to align the written partition sizes for optimal reads downstream.
 
 ## optimizeWrite vs Optimize
 Given the complexity involved in shuffle operations, having `optimizeWrite` be true on a Spark job may underutilize the cluster, but optimizing the files in a table to be 128-200mb size improves read operations for all downstream jobs. It is an option to skip optimized writes and have a smaller cluster use the `optimize` command on a table to group smaller files together as a background job.
@@ -49,7 +49,7 @@ Large files become large partitions and end up with executor memory exhaustion w
 Since a cluster has so many CPU Cores, it is possible for not all CPU Cores to be processing partitions if the number of partitions is not able to be allocated properly. The sweet spot to optimize parallelism is to have 3x the number of cores be the total partitions.
 
 ## Shuffle Spill
-If you see a shuffle spill in the median quartile of the spark job, the partitions are too big. Due to the default read partition size of 128mb, this will most likely only happen when a shuffle is present in the job. The total number of partitions needs *increased* by increasing `spark.sql.shuffle.partitions` (See the formula below).
+If you see a shuffle spill in the median quartile of the spark job, the partitions are too big. Due to the default read partition size of 128mb, this will most likely only happen when a shuffle is present in the job. The total number of partitions needs **increased** by increasing `spark.sql.shuffle.partitions` (See the formula below).
 
 ## Knobs
 ### Spark Conf
@@ -65,7 +65,7 @@ If you see a shuffle spill in the median quartile of the spark job, the partitio
     - Increase to 128mb if you're already using optimized writes
 
 ## Run-Length Encoding
-What we need to know is we can sort partition data with the `sortWithinPartition` spark command. If we designate the lowest cardinality columns to be sorted (and the largest sized columns, such as strings vs smaller sized columns like boolean), Run-Length Encoding kicks in and the data can be compressed *even smaller* be grouping the values together in columnar format. This benefits downstream jobs because they have to read less data. **Note: any shuffle that happens after the sort command completely unsorts the data**
+What we need to know is we can sort partition data with the `sortWithinPartition` spark command. If we designate the lowest cardinality columns to be sorted (and the largest sized columns, such as strings vs smaller sized columns like boolean), Run-Length Encoding kicks in and the data can be compressed **even smaller** be grouping the values together in columnar format. This benefits downstream jobs because they have to read less data. *Note: any shuffle that happens after the sort command completely unsorts the data*
 
 ## References
 ### Videos
