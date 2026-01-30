@@ -26,7 +26,7 @@ When Spark reads in data, it automatically chunks out the data into read partiti
 
 ### Shuffle Phase
 A shuffle occurs during wide transformations, `group by`, `order by`, etc. When a shuffle occurs, data is transferred across executors to group the data in shuffle partitions for the wide transformation to occur. The partition size is variable through roughly this formula:  
-`Total Size of Data Read (Compressed) / 200 (Default Total Shuffle Partitions)` -> Partition Size (MB)
+`Total Size of Data Read (Compressed) / 200 (Default Total Shuffle Partitions)` -> Shuffle Partition Size (MB)
 
 ### Write Phase
 The end of a spark job normally ends up writing data. The partition size and number of partitions for this phase are determined by the previous phase (Shuffle or Read). There is an interesting dilemma here because the ideal write size of partitions is 128-200mb, but the shuffle phase can change the partition size and number of partitions. There is the `spark.databricks.delta.optimizeWrite.enabled` = true config that will trigger *another* shuffle to align the partition size for optimal reads downstream.
@@ -53,9 +53,9 @@ If you see a shuffle spill in the median quartile of the spark job, the partitio
 ### Spark Conf
 - spark.sql.files.maxPartitionBytes (default: 128mb)
     - Don't need to change this too often unless the output of your job increases data size, like exploding out an array.
-    - The other reason to change this input is for parallelism. 
+    - The other reason to change this input is for parallelism (Total Partitions = 3x Number of CPU Cores in Cluster)
 - spark.sql.shuffle.partitions (default: 200)
-    - Formula: Total Size of Data Read (Compressed) / 200mb (Magic Number) = Total Shuffle Partitions
+    - Formula: `Total Size of Data Read (Compressed) / 200mb (Magic Number) = Total Shuffle Partitions`
 
 ### AQE
 - spark.sql.adaptive.advisoryPartitionSizeInBytes (default: 64mb)
