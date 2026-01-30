@@ -54,6 +54,7 @@ If you see a shuffle spill in the median quartile of the spark job, the partitio
 - spark.sql.files.maxPartitionBytes (default: 128mb)
     - Don't need to change this too often unless the output of your job increases data size, like exploding out an array.
     - The other reason to change this input is for parallelism (Total Partitions = 3x Number of CPU Cores in Cluster)
+        - Decrease to 32-64mb for streams with small files to increase parallelism
 - spark.sql.shuffle.partitions (default: 200)
     - Formula: `Total Size of Data Read (Compressed) / 200mb (Magic Number) = Total Shuffle Partitions`
 
