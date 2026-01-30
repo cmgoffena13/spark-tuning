@@ -18,7 +18,7 @@
 - Partition Size (MB)
 
 ## Walkthrough
-A partition in Spark is a chunk of data. A partition is processed by 1 CPU Core. It is important to note that if data is compressed, any sizes are of the compressed data. They are uncompressed during processing.
+A partition in Spark is a chunk of data. A partition is processed by 1 CPU Core. It is important to note that if data is compressed, any sizes are of the compressed data. They are only uncompressed during executor processing.
 
 ### Read Phase
 When Spark reads in data, it automatically chunks out the data into read partitions, doing its best to have each partition size be the default (128MB). This means the number of partitions read is variable through roughly this formula:  
@@ -29,10 +29,10 @@ A shuffle occurs during wide transformations, `group by`, `order by`, etc. When 
 `Total Size of Data Read (Compressed) / 200 (Default Total Shuffle Partitions)` -> Shuffle Partition Size (MB)
 
 ### Write Phase
-The end of a spark job normally ends up writing data. The partition size and number of partitions for this phase are determined by the previous phase (Shuffle or Read). There is an interesting dilemma here because the ideal write size of partitions is 128-200mb, but the shuffle phase can change the partition size and number of partitions. There is the `spark.databricks.delta.optimizeWrite.enabled` = true config that will trigger *another* shuffle to align the partition size for optimal reads downstream.
+The end of a spark job normally ends up writing data. The partition size and number of partitions for this phase are determined by the previous phase (Shuffle or Read). There is an interesting dilemma here because the ideal write size of partitions is 128-200mb, but the shuffle phase can change the partition size and number of partitions. There is the `spark.databricks.delta.optimizeWrite.enabled` = true config that will trigger *another* shuffle to align the written partition sizes for optimal reads downstream.
 
-## WriteOptimize vs Optimize
-Given the complexity involved in shuffle operations, having optimizedWrite be true on a Spark job may underutilize the cluster, but optimizing the files in a table to be 128-200mb size improves read operations for all downstream jobs. It is an option to skip optimized writes and have a smaller cluster use the `optimize` command on a table to group smaller files together as a background job.
+## optimizeWrite vs Optimize
+Given the complexity involved in shuffle operations, having `optimizeWrite` be true on a Spark job may underutilize the cluster, but optimizing the files in a table to be 128-200mb size improves read operations for all downstream jobs. It is an option to skip optimized writes and have a smaller cluster use the `optimize` command on a table to group smaller files together as a background job.
 
 ## AQE
 Adaptive Query Execution (AQE) is turned on by default. It optimizes joins based upon runtime statistics, but we are mostly concerned with its ability to merge small shuffle partitions together. It targets ~64mb size partitions if there are small partitions detected. This means if we over-allocate the number of partitions and the size of partitions becomes small, AQE will merge smaller partitions together to help prevent the "small file problem". The reason why the default is ~64mb is because it is optimized for write parallelism rather that optimized file size for writes. This means faster writes.
@@ -47,7 +47,7 @@ Large files become large partitions and end up with executor memory exhaustion w
 Since a cluster has so many CPU Cores, it is possible for not all CPU Cores to be processing partitions if the number of partitions is not able to be allocated properly. The sweet spot to optimize parallelism is to have 3x the number of cores be the total partitions.
 
 ## Shuffle Spill
-If you see a shuffle spill in the median quartile of the spark job, the partitions are too big. Due to the default read partition size of 128mb, this will most likely only happen when a shuffle is present in the job. The total number of partitions needs *increased* by increasing `spark.sql.shuffle.partitions`.
+If you see a shuffle spill in the median quartile of the spark job, the partitions are too big. Due to the default read partition size of 128mb, this will most likely only happen when a shuffle is present in the job. The total number of partitions needs *increased* by increasing `spark.sql.shuffle.partitions` (See the formula below).
 
 ## Knobs
 ### Spark Conf
