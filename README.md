@@ -26,7 +26,9 @@ When Spark reads in data, it automatically chunks out the data into read partiti
 
 ### Shuffle Phase
 A shuffle occurs during wide transformations, `group by`, `order by`, etc. When a shuffle occurs, data is transferred across executors to group the data in shuffle partitions for the wide transformation to occur. The partition size is variable through roughly this formula:  
-`Total Size of Data Read (Compressed) / 200 (Default Total Shuffle Partitions)` -> Shuffle Partition Size (MB)
+`Total Size of Data Read (Compressed) / 200 (Default Total Shuffle Partitions)` -> Shuffle Partition Size (MB)  
+
+Because the default for total shuffle partitions is 200, with no automatic scaling, it is highly likely that this config will need adjusted. Especially if the total number of cpu cores in the cluster is greater than 200 (because this would mean the cluster is not utilizing the maximum parallelism).
 
 ### Write Phase
 The end of a spark job normally ends up writing data. The partition size and number of partitions for this phase are determined by the previous phase (Shuffle or Read). There is an interesting dilemma here because the ideal write size of partitions is 128-200mb, but the shuffle phase can change the partition size and number of partitions. There is the `spark.databricks.delta.optimizeWrite.enabled` = true config that will trigger *another* shuffle to align the written partition sizes for optimal reads downstream.
