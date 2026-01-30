@@ -71,3 +71,6 @@ What we need to know is we can sort partition data with the `sortWithinPartition
 ### Videos
 - [How to Automate Performance Tuning for Apache Spark by Jean Yves Stephan](https://www.youtube.com/watch?v=ph_2xwVjCGs)
 - [Apache Spark Core - Practical Optimization by Daniel Tomes](https://www.youtube.com/watch?v=_ArCesElWp8)
+
+### Articles
+- [3 maxPartitionBytes Tweaks for Small, Large, and Mixed File sizes](https://www.databricksters.com/p/spark-file-reads-at-warp-speed-3)
